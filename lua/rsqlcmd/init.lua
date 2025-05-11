@@ -4,6 +4,7 @@ M.rsqlcmd_path = "rsqlcmd";
 
 M.connection_strings = nil;
 M.current_target = 1;
+M.no_new_lines = false;
 
 M.setup = function(config)
     vim.api.nvim_create_user_command("RSqlCmd",
@@ -23,7 +24,16 @@ end
 
 M.next_target = function()
     M.current_target = math.fmod(M.current_target, #M.connection_strings) + 1
-    print(M.current_target .. " " .. M.connection_strings[M.current_target])
+    M.log("Current target: " .. M.current_target .. " " .. M.connection_strings[M.current_target])
+end
+
+M.toggle_nnl = function()
+    M.no_new_lines = not M.no_new_lines ;
+    if M.no_new_lines then
+        M.log("No new lines enabled")
+    else
+        M.log("No new lines disabled")
+    end
 end
 
 M.run_cmd = function(args)
@@ -63,10 +73,6 @@ M.create_temp_file = function(lines)
     return true, temp_path
 end
 
-M.normalize_path = function(path)
-    return path:gsub("/", "\\")
-end
-
 M.run_in_buf = function(cmd)
     print(cmd)
     local lines = vim.fn.systemlist(cmd)
@@ -89,6 +95,10 @@ M.build_cmd = function(file_path, args)
         file_path = "\"" .. file_path .. "\"";
     end
     cmd = cmd .. " -f " .. file_path
+
+    if M.no_new_lines then
+        cmd = cmd .. " -nnl"
+    end
 
     if args ~= "" then
         cmd = cmd .. " " .. args
