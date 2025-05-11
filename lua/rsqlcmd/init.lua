@@ -72,7 +72,7 @@ M.run_in_buf = function(cmd)
     local lines = vim.fn.systemlist(cmd)
 
     for i, line in ipairs(lines) do
-        lines[i] = string.sub(line, 1, -2)
+        lines[i] = string.gsub(line, "\r", "")
     end
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
