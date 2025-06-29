@@ -36,9 +36,19 @@ M.toggle_nnl = function()
     end
 end
 
+M.has_value  = function(tab, val)
+    for _, value in ipairs(tab) do
+        if value == val then
+            return true
+        end
+    end
+
+    return false
+end
+
 M.run_cmd = function(args)
     local lines = M.get_selection(args)
-    M.run({ args = args.args }, lines)
+    M.run({ args = args.args, fargs = args.fargs }, lines)
 end
 
 M.get_selection = function(args)
@@ -54,7 +64,7 @@ M.run = function(options, lines)
     end
 
     local cmd = M.build_cmd(file_path, options.args)
-    M.run_in_buf(cmd)
+    M.run_in_buf(cmd, options)
 end
 
 M.create_temp_file = function(lines)
@@ -73,7 +83,7 @@ M.create_temp_file = function(lines)
     return true, temp_path
 end
 
-M.run_in_buf = function(cmd)
+M.run_in_buf = function(cmd, options)
     print(cmd)
     local lines = vim.fn.systemlist(cmd)
 
@@ -85,6 +95,10 @@ M.run_in_buf = function(cmd)
 
     vim.api.nvim_command("split")
     vim.api.nvim_set_current_buf(buf)
+
+    if M.has_value(options.fargs, "-i") then
+        vim.api.nvim_buf_set_option(buf, 'filetype', 'tsql')
+    end
 end
 
 M.build_cmd = function(file_path, args)
