@@ -84,7 +84,6 @@ M.create_temp_file = function(lines)
 end
 
 M.run_in_buf = function(cmd, options)
-    print(cmd)
     local lines = vim.fn.systemlist(cmd)
 
     for i, line in ipairs(lines) do
