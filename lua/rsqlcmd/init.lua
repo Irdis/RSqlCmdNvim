@@ -182,6 +182,10 @@ M.get_connection_string = function()
     return "\"" .. M.connection_strings[M.current_target] .. "\""
 end
 
+M.file_exists = function (path)
+    return vim.loop.fs_stat(path) ~= nil
+end
+
 M.log = function(msg)
     print("[rsqlcmd] " .. msg)
 end
