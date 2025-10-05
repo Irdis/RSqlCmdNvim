@@ -150,14 +150,13 @@ M.run_in_buf = function(cmd, options)
         lines[i] = string.gsub(line, "\r", "")
     end
     local buf = vim.api.nvim_create_buf(false, true)
+    if M.has_value(options.fargs, "-i") then
+        vim.api.nvim_buf_set_option(buf, 'filetype', 'tsql')
+    end
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
     vim.api.nvim_command("split")
     vim.api.nvim_set_current_buf(buf)
-
-    if M.has_value(options.fargs, "-i") then
-        vim.api.nvim_buf_set_option(buf, 'filetype', 'tsql')
-    end
 end
 
 M.build_cmd = function(file_path, args)
