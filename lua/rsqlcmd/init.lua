@@ -6,7 +6,67 @@ M.connection_strings = nil;
 M.current_target = 1;
 M.no_new_lines = false;
 
+M.build = function()
+    if M.rsqlcmd_exist_and_version_match() then
+        return
+    end
+    local net_dir = M.get_net_dir()
+    local has_dotnet = vim.fn.executable('dotnet') == 1
+
+    if not has_dotnet then
+        M.log('dotnet is not found. It is required to build the rsqlcmd binary. ' ..
+            'Install it from https://dotnet.microsoft.com/en-us/download')
+        return
+    end
+    M.log('Building, please wait...')
+    vim.system({ 'build.bat' }, { cwd = net_dir }, function(result)
+        if result.code ~= 0 then
+            M.log('Failed to build dotnet binary: ' .. (result.stdout or 'unknown error'))
+            return
+        end
+        local rsqlcmd_path = M.get_rsqlcmd_path()
+        if not M.file_exists(rsqlcmd_path) then
+            M.log('Unknown error, rsqlcmd binary was not found ' .. rsqlcmd_path)
+            return
+        end
+        M.log('rsqlcmd binary built successfully!')
+    end)
+end
+
+M.rsqlcmd_exist_and_version_match = function ()
+    local rsqlcmd_path = M.get_rsqlcmd_path()
+    if not M.file_exists(rsqlcmd_path) then
+        return false
+    end
+
+    local net_dir = M.get_net_dir()
+
+    local original_version_file = net_dir .. '/bin/version'
+    if not M.file_exists(original_version_file) then
+        return false
+    end
+
+    local original_version = vim.fn.readfile(original_version_file)
+
+    local new_version_file = net_dir .. '/version'
+    local new_version = vim.fn.readfile(new_version_file)
+
+    return original_version[1] == new_version[1]
+end
+
+M.get_rsqlcmd_path = function ()
+    local net_dir = M.get_net_dir()
+    return net_dir .. '/bin/rsqlcmd.exe'
+end
+
+M.get_net_dir = function ()
+    local plugin_dir = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':h:h')
+    local net_dir = plugin_dir .. '/../net'
+    return net_dir
+end
+
 M.setup = function(config)
+    M.rsqlcmd_path = M.get_rsqlcmd_path()
     vim.api.nvim_create_user_command("RSqlCmd",
         M.run_cmd,
         {
@@ -28,7 +88,7 @@ M.next_target = function()
 end
 
 M.toggle_nnl = function()
-    M.no_new_lines = not M.no_new_lines ;
+    M.no_new_lines = not M.no_new_lines
     if M.no_new_lines then
         M.log("No new lines enabled")
     else
@@ -84,7 +144,6 @@ M.create_temp_file = function(lines)
 end
 
 M.run_in_buf = function(cmd, options)
-    print(cmd)
     local lines = vim.fn.systemlist(cmd)
 
     for i, line in ipairs(lines) do
